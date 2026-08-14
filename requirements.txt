@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+pymysql
+pandas
+numpy
+scipy
+scikit-learn
+python-dotenv
+joblib
+implicit>=0.7.3
