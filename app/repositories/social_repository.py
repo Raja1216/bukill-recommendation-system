@@ -186,7 +186,7 @@ class SocialRepository:
     
         return pd.read_sql(
             query,
-            self.engine,
+            engine,
             params={
                 "user_id": int(user_id),
                 "limit": int(limit)
