@@ -45,7 +45,13 @@ def recommendations_for_user(
     service = request.app.state.recommendation_service
     try:
         items = service.recommend(user_id=user_id, limit=limit)
+        return {
+            "user_id": user_id,
+            "count": len(items),
+            "recommendations": items,
+        }
     except ValueError as exc:
+        print(f"Recommendation error for user {user_id}:", repr(exc),)
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
     return {

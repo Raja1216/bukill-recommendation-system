@@ -1,3 +1,4 @@
+import math
 from collections import defaultdict
 
 from app.config import HYBRID_WEIGHTS
@@ -7,8 +8,11 @@ SCORE_FIELDS = list(HYBRID_WEIGHTS.keys())
 SOURCE_NAMES = {
     "content_score": "content",
     "collaborative_score": "collaborative",
+    "social_score": "social",
     "interest_score": "interest",
+    "creator_affinity_score": "creator_affinity",
     "trending_score": "trending",
+    "freshness_score": "fresh",
 }
 
 
@@ -37,20 +41,20 @@ class HybridRanker:
             final_score = 0.0
             sources = []
             for field, weight in HYBRID_WEIGHTS.items():
-                score = float(item.get(field, 0.0))
+                score = self.safe_float(item.get(field, 0))
                 final_score += score * weight
                 if score > 0:
                     sources.append(SOURCE_NAMES[field])
 
             item["score"] = round(final_score, 6)
             item["sources"] = sources
-            item["reason"] = self._reason(item)
+            item["reason"] = self._reason(self, item)
 
         return sorted(candidates, key=lambda item: item["score"], reverse=True)
 
     def _normalize(self, candidates: list[dict]):
         for field in SCORE_FIELDS:
-            values = [float(item.get(field, 0.0)) for item in candidates]
+            values = [self.safe_float(item.get(field, 0)) for item in candidates]
             positive = [value for value in values if value > 0]
             if not positive:
                 for item in candidates:
@@ -61,7 +65,7 @@ class HybridRanker:
             max_value = max(positive)
 
             for item in candidates:
-                value = float(item.get(field, 0.0))
+                value = self.safe_float(item.get(field, 0))
                 if value <= 0:
                     item[field] = 0.0
                 elif max_value == min_value:
@@ -70,14 +74,33 @@ class HybridRanker:
                     item[field] = (value - min_value) / (max_value - min_value)
 
     @staticmethod
-    def _reason(item: dict) -> str:
+    def _reason(self, item: dict) -> str:
         fields = {
             "content_score": "Matches your activity and content interests",
             "collaborative_score": "People with similar activity also engaged with this",
+            "social_score": "Popular among your friends and people you follow",
             "interest_score": "Matches your selected interests",
+            "creator_affinity_score": "From a creator you frequently engage with",
             "trending_score": "Trending now",
+            "freshness_score": "New Buckil you may like",
         }
-        best_field = max(fields.keys(), key=lambda field: float(item.get(field, 0.0)))
+        best_field = max(fields.keys(), key=lambda field: (self.safe_float(item.get(field, 0))))
         if float(item.get(best_field, 0.0)) <= 0:
             return "Recommended for you"
         return fields[best_field]
+    
+    @staticmethod
+    def safe_float(value):
+
+        try:
+            value = float(value)
+        except (TypeError, ValueError):
+            return 0.0
+
+        if math.isnan(value):
+            return 0.0
+
+        if math.isinf(value):
+            return 0.0
+
+        return value

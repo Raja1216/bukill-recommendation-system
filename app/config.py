@@ -27,6 +27,19 @@ TIME_DECAY_HALF_LIFE_DAYS = 60.0
 TRENDING_HALF_LIFE_DAYS = 7.0
 MAX_USER_ITEM_INTERACTION_SCORE = 50.0
 
+SOCIAL_CANDIDATES = int(os.getenv("SOCIAL_CANDIDATES", "200"))
+CREATOR_AFFINITY_CANDIDATES = int(
+    os.getenv("CREATOR_AFFINITY_CANDIDATES", "150")
+)
+FRESH_CANDIDATES = int(os.getenv("FRESH_CANDIDATES", "100"))
+
+SOCIAL_HALF_LIFE_DAYS = 30.0
+CREATOR_AFFINITY_HALF_LIFE_DAYS = 60.0
+FRESH_HALF_LIFE_DAYS = 10.0
+
+MAX_PER_CREATOR = 2
+MAX_PER_CATEGORY = 3
+
 EVENT_WEIGHTS = {
     "VIEW": 1.0,
     "LIKE": 3.0,
@@ -39,8 +52,13 @@ EVENT_WEIGHTS = {
 
 # Version-1 ranker. Later these weights can be learned from impression/click data.
 HYBRID_WEIGHTS = {
-    "content_score": 0.35,
-    "collaborative_score": 0.35,
-    "interest_score": 0.15,
-    "trending_score": 0.15,
+    "content_score": 0.23,
+    "collaborative_score": 0.23,
+    "social_score": 0.18,
+    "interest_score": 0.10,
+    "creator_affinity_score": 0.08,
+    "trending_score": 0.08,
+    "freshness_score": 0.10,
 }
+
+

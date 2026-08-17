@@ -116,3 +116,47 @@ class BuckilRepository:
                 },
             ).fetchall()
         return {int(row[0]) for row in rows}
+    
+    def get_diversity_metadata(
+        self,
+        buckil_ids: list[int],
+    ) -> pd.DataFrame:
+    
+        if not buckil_ids:
+            return pd.DataFrame()
+    
+        query = text(
+            """
+            SELECT
+                b.id AS buckil_id,
+                b.createdBy AS creator_id,
+                MIN(bc.categoryId) AS primary_category_id
+    
+            FROM buckils b
+    
+            LEFT JOIN buckil_categories bc
+                ON bc.buckilId = b.id
+    
+            WHERE b.id IN :buckil_ids
+    
+            GROUP BY
+                b.id,
+                b.createdBy
+            """
+        ).bindparams(
+            bindparam(
+                "buckil_ids",
+                expanding=True,
+            )
+        )
+    
+        return pd.read_sql(
+            query,
+            engine,
+            params={
+                "buckil_ids": [
+                    int(x)
+                    for x in buckil_ids
+                ]
+            },
+        )
