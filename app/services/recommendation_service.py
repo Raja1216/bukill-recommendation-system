@@ -116,6 +116,51 @@ class RecommendationService:
             for item in final_items[:limit]
         ]
 
+    def recommend_paginated(
+        self,
+        user_id: int,
+        limit: int = 20,
+        offset: int = 0,
+    ) -> dict:
+
+        # We need everything up to the end of
+        # the requested page.
+        required_count = offset + limit + 1
+
+        recommendations = self.recommend(
+            user_id=user_id,
+            limit=required_count,
+        )
+
+        has_more = len(recommendations) > (
+            offset + limit
+        )
+
+        page_items = recommendations[
+            offset:offset + limit
+        ]
+
+        next_offset = (
+            offset + len(page_items)
+            if has_more
+            else None
+        )
+
+        return {
+            "user_id": user_id,
+
+            "count": len(page_items),
+
+            "pagination": {
+                "limit": limit,
+                "offset": offset,
+                "next_offset": next_offset,
+                "has_more": has_more,
+            },
+
+            "recommendations": page_items,
+        }
+
     def similar(self, buckil_id: int, limit: int = 10) -> list[dict]:
         items = self.content.similar(buckil_id, limit)
         return [
@@ -125,6 +170,49 @@ class RecommendationService:
             }
             for item in items
         ]
+
+    def similar_paginated(
+        self,
+        buckil_id: int,
+        limit: int = 20,
+        offset: int = 0,
+    ) -> dict:
+
+        required_count = offset + limit + 1
+
+        recommendations = self.content.similar(
+            buckil_id=buckil_id,
+            limit=required_count,
+        )
+
+        has_more = len(recommendations) > (
+            offset + limit
+        )
+
+        page_items = recommendations[
+            offset:offset + limit
+        ]
+
+        next_offset = (
+            offset + len(page_items)
+            if has_more
+            else None
+        )
+
+        return {
+            "buckil_id": buckil_id,
+
+            "count": len(page_items),
+
+            "pagination": {
+                "limit": limit,
+                "offset": offset,
+                "next_offset": next_offset,
+                "has_more": has_more,
+            },
+
+            "recommendations": page_items,
+        }
 
     def trending_items(self, limit: int = 20) -> list[dict]:
         items = self.trending.recommend(limit)
@@ -141,3 +229,67 @@ class RecommendationService:
             }
             for item in items
         ]
+
+    def trending_paginated(
+        self,
+        limit: int = 20,
+        offset: int = 0,
+    ) -> dict:
+
+        required_count = offset + limit + 1
+
+        recommendations = self.trending.recommend(
+            required_count
+        )
+
+        has_more = len(recommendations) > (
+            offset + limit
+        )
+
+        page_items = recommendations[
+            offset:offset + limit
+        ]
+
+        next_offset = (
+            offset + len(page_items)
+            if has_more
+            else None
+        )
+
+        page_items = [
+            {
+                "buckil_id": int(
+                    item["buckil_id"]
+                ),
+
+                "score": round(
+                    float(
+                        item.get(
+                            "trending_score",
+                            0.0,
+                        )
+                    ),
+                    6,
+                ),
+
+                "sources": [
+                    "trending"
+                ],
+
+                "reason": "Trending now",
+            }
+            for item in page_items
+        ]
+
+        return {
+            "count": len(page_items),
+
+            "pagination": {
+                "limit": limit,
+                "offset": offset,
+                "next_offset": next_offset,
+                "has_more": has_more,
+            },
+
+            "recommendations": page_items,
+        }
