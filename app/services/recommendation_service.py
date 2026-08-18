@@ -192,6 +192,36 @@ class RecommendationService:
         page_items = recommendations[
             offset:offset + limit
         ]
+        
+        formatted_items = [
+            {
+                "buckil_id": int(
+                    item["buckil_id"]
+                ),
+
+                "score": round(
+                    float(
+                        item.get(
+                            "content_score",
+                            0.0,
+                        )
+                    ),
+                    6,
+                ),
+
+                "sources": [
+                    "content"
+                ],
+
+                "reason": (
+                    "Similar content based on "
+                    "Buckil title, description, "
+                    "tags and categories"
+                ),
+            }
+
+            for item in page_items
+        ]
 
         next_offset = (
             offset + len(page_items)
@@ -211,7 +241,7 @@ class RecommendationService:
                 "has_more": has_more,
             },
 
-            "recommendations": page_items,
+            "recommendations": formatted_items,
         }
 
     def trending_items(self, limit: int = 20) -> list[dict]:
